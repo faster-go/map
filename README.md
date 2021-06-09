@@ -1,10 +1,13 @@
 # Fmap
 Fmap is a faster map, better than sync.Map, easy to use as origin map
+
 Memory usage is similar to origin map
 
 # Why fast
 It using a fragment-map arch
+
 Get/Set api use hash(key%N) to find a internal map
+
 This can avoid lots of lock race
 ```
 ============fmap=============
