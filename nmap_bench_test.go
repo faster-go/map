@@ -10,19 +10,14 @@ const (
 	setTotal = 1024
 )
 
-func GetSet(m IntMap, finished chan struct{}) (set func(key, value int), get func(key, value int)) {
+func GetSet(m NMap, finished chan struct{}) (set func(key, value int), get func(key, value int)) {
 	return func(key, value int) {
-			// r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			for i := 0; i < getTotal; i++ {
-				// m.Get(r.Intn(getTotal))
+			for i := uint32(0); i < getTotal; i++ {
 				m.Get(i)
 			}
 			finished <- struct{}{}
 		}, func(key, value int) {
-			// r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			for i := 0; i < setTotal; i++ {
-				// n := r.Intn(setTotal)
-				// m.Set(n, n)
+			for i := uint32(0); i < setTotal; i++ {
 				m.Set(i, i)
 			}
 			finished <- struct{}{}
@@ -30,11 +25,12 @@ func GetSet(m IntMap, finished chan struct{}) (set func(key, value int), get fun
 }
 
 func benchmarkMultiGetSetDifferent(bucket int, b *testing.B) {
-	m := NewIntMap(bucket)
+	m := NewNMap(bucket)
 	finished := make(chan struct{}, 2*b.N)
 	get, set := GetSet(m, finished)
-	m.Set(-1, -1)
+	m.Set(1, 1)
 	b.ResetTimer()
+	//run N*2 goroutine (Get/Set KV(0-1000))
 	for i := 0; i < b.N; i++ {
 		go set(i, i)
 		go get(i, i)
@@ -46,18 +42,13 @@ func benchmarkMultiGetSetDifferent(bucket int, b *testing.B) {
 
 func GetSetSyncMap(m *sync.Map, finished chan struct{}) (get func(key, value int), set func(key, value int)) {
 	get = func(key, value int) {
-		// r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		for i := 0; i < getTotal; i++ {
-			// m.Load(r.Intn(getTotal))
 			m.Load(i)
 		}
 		finished <- struct{}{}
 	}
 	set = func(key, value int) {
-		// r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		for i := 0; i < setTotal; i++ {
-			// n := r.Intn(setTotal)
-			// m.Store(n, n)
 			m.Store(i, i)
 		}
 		finished <- struct{}{}
